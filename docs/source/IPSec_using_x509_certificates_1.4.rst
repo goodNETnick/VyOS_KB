@@ -63,24 +63,168 @@ the keys and commands to set them (after the output lines
    set pki ca CA certificate 'MIIDnTCCAo........=' 
    set pki ca CA private key 'MIIEvwIBAD........='
 
+paste these commands into configuration mode on R1 (CA):
 
+.. code-block:: console
 
-Creating recipes
-----------------
+   vyos@R1:~$ configure 
+   vyos@R1# set pki ca CA certificate 'MIIDnTCCAo........=' 
+   vyos@R1# set pki ca CA private key 'MIIEvwIBAD........=' 
+   vyos@R1# commit 
+   vyos@R1# save 
 
-To retrieve a list of random ingredients,
-you can use the ``lumache.get_random_ingredients()`` function:
+We still need the Root CA certificate command for Router R2 
+(set pki ca CA certificate 'MIIDnTCCAo........='). Save it. 
+The Private Key CA is the most important element of the PKI 
+(set pki ca CA private key 'MIIEvwIBAD........='). It must not 
+be shared with anyone (including R2)
 
-.. autofunction:: lumache.get_random_ingredients
+Second step. Generate an encryption key pair and X.509 certificate for each IPsec pear
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``kind`` parameter should be either ``"meat"``, ``"fish"``,
-or ``"veggies"``. Otherwise, :py:func:`lumache.get_random_ingredients`
-will raise an exception.
+Certificates must be generated on the CA, in our case on R1.
 
-.. autoexception:: lumache.InvalidKindError
+Use Operational Mode commands, not Configuration Mode. 
+Do not forget to copy the lines with the keys and commands to 
+set them (after the output lines "Configure mode commands to install") 
 
-For example:
+.. code-block:: console
 
->>> import lumache
->>> lumache.get_random_ingredients()
-['shells', 'gorgonzola', 'parsley']
+   vyos@R1:~$ generate pki certificate sign CA install R1 
+   Do you already have a certificate request? [y/N] N 
+   Enter private key type: [rsa, dsa, ec] (Default: rsa) 
+   Enter private key bits: (Default: 2048) 
+   Enter country code: (Default: GB) 
+   Enter state: (Default: Some-State) 
+   Enter locality: (Default: Some-City) 
+   Enter organization name: (Default: VyOS) 
+   Enter common name: (Default: vyos.io) R1 
+   Do you want to configure Subject Alternative Names? [y/N] N 
+   Enter how many days certificate will be valid: (Default: 365) 
+   Enter certificate type: (client, server) (Default: server) 
+   Note: If you plan to use the generated key on this router, do not encrypt the private key. 
+   Do you want to encrypt the private key with a passphrase? [y/N] N 
+   Configure mode commands to install: 
+   set pki certificate R1 certificate 'MIIDrDCCA ..............=' 
+   set pki certificate R1 private key 'MIIEvgIBA...............O' 
+
+.. code-block:: console
+
+   vyos@R1:~$ generate pki certificate sign CA install R2 
+   Do you already have a certificate request? [y/N] N 
+   Enter private key type: [rsa, dsa, ec] (Default: rsa) 
+   Enter private key bits: (Default: 2048) 
+   Enter country code: (Default: GB) 
+   Enter state: (Default: Some-State) 
+   Enter locality: (Default: Some-City) 
+   Enter organization name: (Default: VyOS) 
+   Enter common name: (Default: vyos.io) R2 
+   Do you want to configure Subject Alternative Names? [y/N] N 
+   Enter how many days certificate will be valid: (Default: 365) 
+   Enter certificate type: (client, server) (Default: server) 
+   Note: If you plan to use the generated key on this router, do not encrypt the private key. 
+   Do you want to encrypt the private key with a passphrase? [y/N] N 
+   Configure mode commands to install: 
+   set pki certificate R2 certificate 'MIIDrDCCAp...........=' 
+   set pki certificate R2 private key 'MIIEvgIBAD...........L' 
+
+Third step. Install keys and certificate in VyOS routers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+On Router R1 (Root CA certificate is already there):
+
+.. code-block:: console
+
+   vyos@R1:~$ configure 
+   vyos@R1# set pki certificate R1 certificate 'MIIDrDCCA ..............=' 
+   vyos@R1# set pki certificate R1 private key 'MIIEvgIBA...............O' 
+
+On the R2 router (Root CA needs to be added):
+
+.. code-block:: console
+
+   vyos@R2:~$ configure 
+   vyos@R2# set pki ca CA certificate 'MIIDnTCCAo........=' 
+   vyos@R2# set pki certificate R1 certificate 'MIIDrDCCAp...........=' 
+   vyos@R2# set pki certificate R1 private key 'MIIEvgIBA...............O' 
+
+Fourth step. IPsec configuration 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Everything is ready to configure IPsec.
+
+IPsec settings on R1:
+
+.. code-block::
+
+   set interfaces ethernet eth0 address '1.1.1.1/24' 
+   set system host R1 
+   set interfaces vti vti10 address 10.10.10.1/30 
+   set vpn ipsec esp-group ESP_DEFAULT compression 'disable' 
+   set vpn ipsec esp-group ESP_DEFAULT lifetime '3600' 
+   set vpn ipsec esp-group ESP_DEFAULT mode 'tunnel' 
+   set vpn ipsec esp-group ESP_DEFAULT pfs 'dh-group19' 
+   set vpn ipsec esp-group ESP_DEFAULT proposal 10 encryption 'aes256gcm128' 
+   set vpn ipsec esp-group ESP_DEFAULT proposal 10 hash 'sha256' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection action 'hold' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection interval '30' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection timeout '120' 
+   set vpn ipsec ike-group IKEv2_DEFAULT ikev2-reauth 'no' 
+   set vpn ipsec ike-group IKEv2_DEFAULT key-exchange 'ikev2' 
+   set vpn ipsec ike-group IKEv2_DEFAULT lifetime '10800' 
+   set vpn ipsec ike-group IKEv2_DEFAULT mobike 'disable' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 dh-group '19' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 encryption 'aes256gcm128' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 hash 'sha256' 
+   set vpn ipsec interface eth0 
+   set vpn ipsec site-to-site peer 1.1.1.2 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
+   set vpn ipsec site-to-site peer 1.1.1.2 authentication mode 'x509' 
+   set vpn ipsec site-to-site peer 1.1.1.2 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
+   set vpn ipsec site-to-site peer 1.1.1.2 authentication x509 ca-certificate CA 
+   set vpn ipsec site-to-site peer 1.1.1.2 authentication x509 certificate R1 
+   set vpn ipsec site-to-site peer 1.1.1.2 connection-type 'initiate' 
+   set vpn ipsec site-to-site peer 1.1.1.2 ike-group 'IKEv2_DEFAULT' 
+   set vpn ipsec site-to-site peer 1.1.1.2 ikev2-reauth 'inherit' 
+   set vpn ipsec site-to-site peer 1.1.1.2 local-address 1.1.1.1 
+   set vpn ipsec site-to-site peer 1.1.1.2 vti bind 'vti10' 
+   set vpn ipsec site-to-site peer 1.1.1.2 vti esp-group 'ESP_DEFAULT' 
+   set vpn ipsec options disable-route-autoinstall 
+
+IPsec settings on R2: 
+
+.. code-block::
+
+   set interfaces ethernet eth0 address '1.1.1.2/24' 
+   set system host R2 
+   set interfaces vti vti10 address 10.10.10.2/30 
+   set vpn ipsec esp-group ESP_DEFAULT compression 'disable' 
+   set vpn ipsec esp-group ESP_DEFAULT lifetime '3600' 
+   set vpn ipsec esp-group ESP_DEFAULT mode 'tunnel' 
+   set vpn ipsec esp-group ESP_DEFAULT pfs 'dh-group19' 
+   set vpn ipsec esp-group ESP_DEFAULT proposal 10 encryption 'aes256gcm128' 
+   set vpn ipsec esp-group ESP_DEFAULT proposal 10 hash 'sha256' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection action 'hold' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection interval '30' 
+   set vpn ipsec ike-group IKEv2_DEFAULT dead-peer-detection timeout '120' 
+   set vpn ipsec ike-group IKEv2_DEFAULT ikev2-reauth 'no' 
+   set vpn ipsec ike-group IKEv2_DEFAULT key-exchange 'ikev2' 
+   set vpn ipsec ike-group IKEv2_DEFAULT lifetime '10800' 
+   set vpn ipsec ike-group IKEv2_DEFAULT mobike 'disable' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 dh-group '19' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 encryption 'aes256gcm128' 
+   set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 hash 'sha256' 
+   set vpn ipsec interface eth0 
+   set vpn ipsec site-to-site peer 1.1.1.1 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
+   set vpn ipsec site-to-site peer 1.1.1.1 authentication mode 'x509' 
+   set vpn ipsec site-to-site peer 1.1.1.1 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
+   set vpn ipsec site-to-site peer 1.1.1.1 authentication x509 ca-certificate CA 
+   set vpn ipsec site-to-site peer 1.1.1.1 authentication x509 certificate R2 
+   set vpn ipsec site-to-site peer 1.1.1.1 connection-type 'initiate' 
+   set vpn ipsec site-to-site peer 1.1.1.1 ike-group 'IKEv2_DEFAULT' 
+   set vpn ipsec site-to-site peer 1.1.1.1 ikev2-reauth 'inherit' 
+   set vpn ipsec site-to-site peer 1.1.1.1 local-address 1.1.1.2 
+   set vpn ipsec site-to-site peer 1.1.1.1 vti bind 'vti10' 
+   set vpn ipsec site-to-site peer 1.1.1.1 vti esp-group 'ESP_DEFAULT' 
+   set vpn ipsec options disable-route-autoinstall 
+   
+.. note:: Note the "authentication id" and "authentication remote-id".
