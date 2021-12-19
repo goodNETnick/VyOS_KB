@@ -18,5 +18,4 @@ Contents
 
 .. toctree::
 
-   usage
-   api
+   IPSec_using_x509_certificates_1.4
