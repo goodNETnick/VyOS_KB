@@ -79,7 +79,7 @@ The Private Key CA is the most important element of the PKI
 (set pki ca CA private key 'MIIEvwIBAD........='). It must not 
 be shared with anyone (including R2)
 
-Second step. Generate an encryption key pair and X.509 certificate for each IPsec pear
+Second step. Generate an encryption key pair and X.509 certificate for each IPsec peer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Certificates must be generated on the CA, in our case on R1.
@@ -157,7 +157,7 @@ IPsec settings on R1:
 
 .. code-block::
 
-   set interfaces ethernet eth0 address '1.1.1.1/24' 
+   set interfaces ethernet eth0 address '192.0.2.11/24' 
    set system host R1 
    set interfaces vti vti10 address 10.10.10.1/30 
    set vpn ipsec esp-group ESP_DEFAULT compression 'disable' 
@@ -177,24 +177,24 @@ IPsec settings on R1:
    set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 encryption 'aes256gcm128' 
    set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 hash 'sha256' 
    set vpn ipsec interface eth0 
-   set vpn ipsec site-to-site peer 1.1.1.2 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
-   set vpn ipsec site-to-site peer 1.1.1.2 authentication mode 'x509' 
-   set vpn ipsec site-to-site peer 1.1.1.2 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
-   set vpn ipsec site-to-site peer 1.1.1.2 authentication x509 ca-certificate CA 
-   set vpn ipsec site-to-site peer 1.1.1.2 authentication x509 certificate R1 
-   set vpn ipsec site-to-site peer 1.1.1.2 connection-type 'initiate' 
-   set vpn ipsec site-to-site peer 1.1.1.2 ike-group 'IKEv2_DEFAULT' 
-   set vpn ipsec site-to-site peer 1.1.1.2 ikev2-reauth 'inherit' 
-   set vpn ipsec site-to-site peer 1.1.1.2 local-address 1.1.1.1 
-   set vpn ipsec site-to-site peer 1.1.1.2 vti bind 'vti10' 
-   set vpn ipsec site-to-site peer 1.1.1.2 vti esp-group 'ESP_DEFAULT' 
+   set vpn ipsec site-to-site peer 192.0.2.22 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
+   set vpn ipsec site-to-site peer 192.0.2.22 authentication mode 'x509' 
+   set vpn ipsec site-to-site peer 192.0.2.22 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
+   set vpn ipsec site-to-site peer 192.0.2.22 authentication x509 ca-certificate CA 
+   set vpn ipsec site-to-site peer 192.0.2.22 authentication x509 certificate R1 
+   set vpn ipsec site-to-site peer 192.0.2.22 connection-type 'initiate' 
+   set vpn ipsec site-to-site peer 192.0.2.22 ike-group 'IKEv2_DEFAULT' 
+   set vpn ipsec site-to-site peer 192.0.2.22 ikev2-reauth 'inherit' 
+   set vpn ipsec site-to-site peer 192.0.2.22 local-address 192.0.2.11 
+   set vpn ipsec site-to-site peer 192.0.2.22 vti bind 'vti10' 
+   set vpn ipsec site-to-site peer 192.0.2.22 vti esp-group 'ESP_DEFAULT' 
    set vpn ipsec options disable-route-autoinstall 
 
 IPsec settings on R2: 
 
 .. code-block::
 
-   set interfaces ethernet eth0 address '1.1.1.2/24' 
+   set interfaces ethernet eth0 address '192.0.2.22/24' 
    set system host R2 
    set interfaces vti vti10 address 10.10.10.2/30 
    set vpn ipsec esp-group ESP_DEFAULT compression 'disable' 
@@ -214,17 +214,17 @@ IPsec settings on R2:
    set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 encryption 'aes256gcm128' 
    set vpn ipsec ike-group IKEv2_DEFAULT proposal 10 hash 'sha256' 
    set vpn ipsec interface eth0 
-   set vpn ipsec site-to-site peer 1.1.1.1 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
-   set vpn ipsec site-to-site peer 1.1.1.1 authentication mode 'x509' 
-   set vpn ipsec site-to-site peer 1.1.1.1 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
-   set vpn ipsec site-to-site peer 1.1.1.1 authentication x509 ca-certificate CA 
-   set vpn ipsec site-to-site peer 1.1.1.1 authentication x509 certificate R2 
-   set vpn ipsec site-to-site peer 1.1.1.1 connection-type 'initiate' 
-   set vpn ipsec site-to-site peer 1.1.1.1 ike-group 'IKEv2_DEFAULT' 
-   set vpn ipsec site-to-site peer 1.1.1.1 ikev2-reauth 'inherit' 
-   set vpn ipsec site-to-site peer 1.1.1.1 local-address 1.1.1.2 
-   set vpn ipsec site-to-site peer 1.1.1.1 vti bind 'vti10' 
-   set vpn ipsec site-to-site peer 1.1.1.1 vti esp-group 'ESP_DEFAULT' 
-   set vpn ipsec options disable-route-autoinstall 
+   set vpn ipsec site-to-site peer 192.0.2.11 authentication id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R2' 
+   set vpn ipsec site-to-site peer 192.0.2.11 authentication mode 'x509' 
+   set vpn ipsec site-to-site peer 192.0.2.11 authentication remote-id 'C=GB, ST=Some-State, L=Some-City, O=VyOS, CN=R1' 
+   set vpn ipsec site-to-site peer 192.0.2.11 authentication x509 ca-certificate CA 
+   set vpn ipsec site-to-site peer 192.0.2.11 authentication x509 certificate R2 
+   set vpn ipsec site-to-site peer 192.0.2.11 connection-type 'initiate' 
+   set vpn ipsec site-to-site peer 192.0.2.11 ike-group 'IKEv2_DEFAULT' 
+   set vpn ipsec site-to-site peer 192.0.2.11 ikev2-reauth 'inherit' 
+   set vpn ipsec site-to-site peer 192.0.2.11 local-address 192.0.2.22 
+   set vpn ipsec site-to-site peer 192.0.2.11 vti bind 'vti10' 
+   set vpn ipsec site-to-site peer 192.0.2.11 vti esp-group 'ESP_DEFAULT' 
+   set vpn ipsec options disable-route-autoinstall
    
 .. note:: Note the "authentication id" and "authentication remote-id".
