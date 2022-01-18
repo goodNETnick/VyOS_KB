@@ -145,8 +145,8 @@ On the R2 router (Root CA needs to be added):
 
    vyos@R2:~$ configure 
    vyos@R2# set pki ca CA certificate 'MIIDnTCCAo........=' 
-   vyos@R2# set pki certificate R1 certificate 'MIIDrDCCAp...........=' 
-   vyos@R2# set pki certificate R1 private key 'MIIEvgIBA...............O' 
+   vyos@R2# set pki certificate R2 certificate 'MIIDrDCCAp...........=' 
+   vyos@R2# set pki certificate R2 private key 'MIIEvgIBAD...........L' 
 
 Fourth step. IPsec configuration 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
