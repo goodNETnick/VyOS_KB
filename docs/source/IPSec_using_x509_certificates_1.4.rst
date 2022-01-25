@@ -227,4 +227,4 @@ IPsec settings on R2:
    set vpn ipsec site-to-site peer 192.0.2.11 vti esp-group 'ESP_DEFAULT' 
    set vpn ipsec options disable-route-autoinstall
    
-.. note:: Note the "authentication id" and "authentication remote-id".
+.. note:: Note the "authentication id" and "authentication remote-id"
