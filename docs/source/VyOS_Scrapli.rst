@@ -1,7 +1,7 @@
 Scrapli 
 =======
 
-scrapli -- scrap(e c)li -- is a python library focused on connecting to devices, 
+`scrapli <https://carlmontanari.github.io/scrapli/>`_ -- scrap(e c)li -- is a python library focused on connecting to devices, 
 specifically network devices (routers/switches/firewalls/etc.) via SSH or Telnet.
 
 Supports both synchronous and asynchronous usage.
