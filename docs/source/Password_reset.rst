@@ -1,3 +1,6 @@
+Resetting the password
+======================
+
 Using the console, restart the VyOS router. The GRUB menu appears.
 Select the relevant option from the GRUB menu and press Enter. The option must start with “Lost password change.”
 
